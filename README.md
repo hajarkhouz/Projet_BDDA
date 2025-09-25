@@ -1,6 +1,7 @@
 # Projet_BDDA
 MiniSGBDR – Projet de TP
 Ce projet consiste en l’implémentation d’un Mini SGBDR (Système de Gestion de Bases de Données Relationnelles) simplifié.
+
 L’objectif est de développer, étape par étape, un SGBD capable de :
 Gérer des commandes proches du SQL (création de tables, insertion, sélection, jointures, etc.)
 Fournir des commandes supplémentaires de type debug pour afficher des informations internes sur les données

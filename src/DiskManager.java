@@ -67,7 +67,21 @@ public class DiskManager {
     public void DeallocPage(PageId pid) {
         freePages.add(pid);
     }
+     public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
+        if (buffer.capacity() != dbConfig.getPagesize()) {
+            throw new IllegalArgumentException("Taille du buffer incorrecte !");
+        }
 
+        File file = new File(dbConfig.getDbpath(), "Data" + pid.getFileIdx() + ".rsdb");
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            raf.seek((long) pid.getPageIdx() * dbConfig.getPagesize());
+            byte[] data = new byte[dbConfig.getPagesize()];
+            raf.readFully(data); 
+            buffer.clear();
+            buffer.put(data);
+            buffer.flip();//prepare le buffer pour la lecture
+        }
+    }
     public void WritePage(PageId pid, ByteBuffer buffer) throws IOException {
         if (buffer.capacity() != dbConfig.getPagesize()) {
             throw new IllegalArgumentException("Taille du buffer incorrecte !");

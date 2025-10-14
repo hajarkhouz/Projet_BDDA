@@ -18,7 +18,7 @@ public class TestDiskManager {
             PageId pid = dm.AllocPage();
             System.out.println("Page allouée : " + pid);
 
-            System.out.println("\nTest : Écriture dans la page");
+            System.out.println("\nTest : Écriture dans la page");// Écriture de données dans la page allouée
             ByteBuffer buffer = ByteBuffer.allocate(config.getPagesize());
             buffer.put("Hello BDDA".getBytes());
             buffer.flip();

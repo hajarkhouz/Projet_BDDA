@@ -1,5 +1,4 @@
 package src;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+
 
 public class DiskManager {
     private DBConfig dbConfig;
@@ -29,15 +30,13 @@ public class DiskManager {
 
     public PageId AllocPage() throws IOException {
         if (!freePages.isEmpty()) {
-            Iterator<PageId> it = freePages.iterator();// cette methode retourne un objet Iterator qui permet de
-                                                       // parcourir les elements de l'ensemble freePages
-            PageId pid = it.next();// cette methode retourne le premier element disponible dans l'ensemble
-                                   // freePages
+            Iterator<PageId> it = freePages.iterator();//cette methode  retourne un objet Iterator qui permet de parcourir les elements de l'ensemble freePages
+            PageId pid = it.next();//cette methode retourne le premier element disponible dans l'ensemble freePages
             it.remove();
             return pid;
         }
 
-        File binDir = new File(dbConfig.getDbpath());// repertoire ou sont stockes les fichiers de donnees
+        File binDir = new File(dbConfig.getDbpath());//repertoire ou sont stockes les fichiers de donnees
 
         for (int i = 0; i < dbConfig.getDmMaxFileCount(); i++) {
             File file = new File(binDir, "Data" + i + ".rsdb");
@@ -46,15 +45,11 @@ public class DiskManager {
                 file.createNewFile();
             }
 
-            long fileSize = file.length();// taille actuelle du fichier en octets
-            if (fileSize + dbConfig.getPagesize() <= dbConfig.getDmMaxFileSize()) {// verifie si l'ajout d'une nouvelle
-                                                                                   // page ne depasse pas la taille
-                                                                                   // maximale autorisee
-                try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {// ouvre le fichier en mode lecture
-                                                                               // ecriture
-                    raf.seek(fileSize);// positionne le curseur a la fin du fichier pour ajouter une nouvelle page
-                    raf.write(new byte[dbConfig.getPagesize()]);// ecrit des octets vides pour initialiser la nouvelle
-                                                                // page
+            long fileSize = file.length();//taille actuelle du fichier en octets
+            if (fileSize + dbConfig.getPagesize() <= dbConfig.getDmMaxFileSize()) {//verifie si l'ajout d'une nouvelle page ne depasse pas la taille maximale autorisee
+                try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {//ouvre le fichier en mode lecture ecriture
+                    raf.seek(fileSize);//positionne le curseur a la fin du fichier pour ajouter une nouvelle page
+                    raf.write(new byte[dbConfig.getPagesize()]);//ecrit des octets vides pour initialiser la nouvelle page
                 }
                 int pageIdx = (int) (fileSize / dbConfig.getPagesize());
                 return new PageId(i, pageIdx);
@@ -67,7 +62,8 @@ public class DiskManager {
     public void DeallocPage(PageId pid) {
         freePages.add(pid);
     }
-     public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
+
+    public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
         if (buffer.capacity() != dbConfig.getPagesize()) {
             throw new IllegalArgumentException("Taille du buffer incorrecte !");
         }
@@ -82,6 +78,7 @@ public class DiskManager {
             buffer.flip();//prepare le buffer pour la lecture
         }
     }
+
     public void WritePage(PageId pid, ByteBuffer buffer) throws IOException {
         if (buffer.capacity() != dbConfig.getPagesize()) {
             throw new IllegalArgumentException("Taille du buffer incorrecte !");

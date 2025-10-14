@@ -15,7 +15,6 @@ public class DBConfig {
         this.dmMaxFileCount = dmMaxFileCount;
         this.dmMaxFileSize = dmMaxFileSize;
     }
-
     public String getDbpath() {
         return dbpath;
     }

@@ -1,4 +1,4 @@
-dbpath = 'DataStorage'
+dbpath = '../BinData'
 pagesize = 4096
 # dm_maxfilecount manquant
 dm_maxfilesize = 10485760

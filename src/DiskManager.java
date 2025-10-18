@@ -1,5 +1,9 @@
 package src;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -21,10 +25,66 @@ public class DiskManager {
         }
     }
 
-    public void Init() {
+    public void init() {
+        // Initialisation de la mémoire
+    freePages = new HashSet<>();
+
+    //Création du dossier si nécessaire
+    File binDir = new File(dbConfig.getDbpath());
+    if (!binDir.exists()) {
+        binDir.mkdirs();
     }
 
-    public void Finish() {
+    //  Création des fichiers binaires si inexistants
+    for (int i = 0; i < dbConfig.getDmMaxFileCount(); i++) {
+        File file = new File(binDir, "Data" + i + ".rsdb");
+        if (!file.exists()) {
+            try {
+                file.createNewFile(); // crée le fichier vide
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //  Synchronisation avec le fichier de pages libres (nom modifiable)
+    File saveFile = new File(binDir, "freepages.txt"); 
+    if (saveFile.exists()) {
+        try (BufferedReader br = new BufferedReader(new FileReader(saveFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                int fileIdx = Integer.parseInt(parts[0].trim());
+                int pageIdx = Integer.parseInt(parts[1].trim());
+                freePages.add(new PageId(fileIdx, pageIdx));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    }
+
+    public void finish() {
+        File binDir = new File(dbConfig.getDbpath());
+    
+    // Création du dossier si nécessaire
+    if (!binDir.exists()) {
+        binDir.mkdirs();
+    }
+
+    // Fichier de sauvegarde des pages libres
+    File saveFile = new File(binDir, "freepages.save");
+
+    try (BufferedWriter bw = new BufferedWriter(new FileWriter(saveFile))) {
+        for (PageId pid : freePages) {
+            // Chaque ligne contient fileIdx et pageIdx séparés par une virgule
+            bw.write(pid.getFileIdx() + "," + pid.getPageIdx());
+            bw.newLine();
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
     }
     
     public PageId AllocPage() throws IOException {

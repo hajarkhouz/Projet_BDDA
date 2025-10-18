@@ -56,8 +56,27 @@ public class DiskManager {
     public void DeallocPage(PageId pid) {
         freePages.add(pid);
     }
-
-    public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
+ // Lecture sécurisée d'une page
+ public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
+    if (buffer.capacity() != dbConfig.getPagesize()) {
+        throw new IllegalArgumentException(
+            "Taille du buffer incorrecte ! Doit correspondre à la taille de page configurée."
+        );
+    }
+    File file = new File(this.binDir, "Data" + pid.getFileIdx() + ".rsdb");
+    if (!file.exists()) {
+        throw new IOException("Fichier de données inexistant : " + file.getAbsolutePath());
+    }
+    byte[] data = new byte[dbConfig.getPagesize()];
+    try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+        raf.seek((long) pid.getPageIdx() * dbConfig.getPagesize());
+        raf.readFully(data);
+    }
+    buffer.clear();
+    buffer.put(data);
+    buffer.flip();
+}
+  /*  public void ReadPage(PageId pid, ByteBuffer buffer) throws IOException {
         if (buffer.capacity() != dbConfig.getPagesize()) {
             throw new IllegalArgumentException("Taille du buffer incorrecte ! Doit correspondre à la taille de page configurée.");
         }
@@ -74,9 +93,9 @@ public class DiskManager {
             buffer.put(data);
             buffer.flip();
         }
-    }
+    }*/
 
-    public void WritePage(PageId pid, ByteBuffer buffer) throws IOException {
+   /* public void WritePage(PageId pid, ByteBuffer buffer) throws IOException {
         if (buffer.capacity() != dbConfig.getPagesize()) {
             throw new IllegalArgumentException("Taille du buffer incorrecte ! Doit correspondre à la taille de page configurée.");
         }
@@ -91,5 +110,46 @@ public class DiskManager {
             buffer.get(data);
             raf.write(data);
         }
+    }*/
+    
+    public void WritePage(PageId pid, ByteBuffer buffer) throws IOException {
+        if (buffer.capacity() != dbConfig.getPagesize()) {
+            throw new IllegalArgumentException("Taille du buffer incorrecte ! Doit correspondre à la taille de page configurée.");
+        }
+    
+        
+        File file = new File(this.binDir, "Data" + pid.getFileIdx() + ".rsdb");
+    
+        // Création du fichier si inexistant
+        if (!file.exists()) {
+            File parent = file.getParentFile();
+            if (!parent.exists()) {
+                if (!parent.mkdirs()) {
+                    throw new IOException("Impossible de créer le dossier parent : " + parent.getAbsolutePath());
+                }
+            }
+            if (!file.createNewFile()) {
+                throw new IOException("Impossible de créer le fichier : " + file.getAbsolutePath());
+            }
+        }
+    
+        System.out.println("DEBUG WritePage: file = " + file.getAbsolutePath());
+    
+         
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            raf.seek((long) pid.getPageIdx() * dbConfig.getPagesize());
+            byte[] data = new byte[dbConfig.getPagesize()];
+            buffer.rewind();
+            
+            buffer.get(data, 0, buffer.remaining()); // copie seulement ce qui est présent
+
+            raf.write(data);
+        }
     }
+    
+////////////////////////////
+   /* public File getBinDir() {
+        return binDir;
+    }*/
+    
 }

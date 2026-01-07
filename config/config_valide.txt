@@ -2,5 +2,5 @@ dbpath ='./DataStorage/BinData'
 pagesize = 4096
 dm_maxfilecount=10
 dm_maxfilesize=10485760
-bm_buffercount=50
+bm_buffercount= 100000
 bm_policy='LRU'

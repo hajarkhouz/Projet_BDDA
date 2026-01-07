@@ -514,24 +514,98 @@ public class SGBD {
         proj.Close();
     }
 
-    private int parseColumnRefToIndex(String colRef, String alias, Relation rel) {
-        // colRef attendu: alias.colName (TP7 A3)
-        int dot = colRef.indexOf('.');
-        if (dot == -1)
-            throw new IllegalArgumentException("Colonne invalide (attendu alias.col): " + colRef);
+    // private int parseColumnRefToIndex(String colRef, String alias, Relation rel)
+    // {
+    // // colRef attendu: alias.colName (TP7 A3)
+    // int dot = colRef.indexOf('.');
+    // if (dot == -1)
+    // throw new IllegalArgumentException("Colonne invalide (attendu alias.col): " +
+    // colRef);
 
-        String a = colRef.substring(0, dot).trim();
-        String col = colRef.substring(dot + 1).trim();
+    // String a = colRef.substring(0, dot).trim();
+    // String col = colRef.substring(dot + 1).trim();
 
-        if (!a.equals(alias))
-            throw new IllegalArgumentException("Alias invalide: " + a + " (attendu " + alias + ")");
+    // if (!a.equals(alias))
+    // throw new IllegalArgumentException("Alias invalide: " + a + " (attendu " +
+    // alias + ")");
 
-        for (int i = 0; i < rel.getColumns().size(); i++) {
-            if (rel.getColumns().get(i).getName().equalsIgnoreCase(col))
-                return i;
-        }
-        throw new IllegalArgumentException("Colonne inconnue: " + col);
-    }
+    // for (int i = 0; i < rel.getColumns().size(); i++) {
+    // if (rel.getColumns().get(i).getName().equalsIgnoreCase(col))
+    // return i;
+    // }
+    // throw new IllegalArgumentException("Colonne inconnue: " + col);
+    // }
+
+    // private Condition parseCondition(String c, String alias, Relation rel) {
+    // // TP7 A3: Terme1OPTerme2, OP parmi =,<,>,<=,>=,<>
+    // String[] ops = new String[] { "<=", ">=", "<>", "=", "<", ">" }; // ordre
+    // important
+    // String opFound = null;
+    // int pos = -1;
+
+    // for (String op : ops) {
+    // pos = c.indexOf(op);
+    // if (pos != -1) {
+    // opFound = op;
+    // break;
+    // }
+    // }
+    // if (opFound == null)
+    // throw new IllegalArgumentException("Condition invalide (opérateur manquant):
+    // " + c);
+
+    // String left = c.substring(0, pos).trim();
+    // String right = c.substring(pos + opFound.length()).trim();
+
+    // Condition.Op op = Condition.parseOp(opFound);
+
+    // boolean leftIsCol = left.contains(".");
+    // boolean rightIsCol = right.contains(".");
+
+    // // TP7 A3: au max un terme est une constante
+    // if (leftIsCol && rightIsCol) {
+    // int lidx = parseColumnRefToIndex(left, alias, rel);
+    // int ridx = parseColumnRefToIndex(right, alias, rel);
+    // return new Condition(lidx, op, ridx);
+    // }
+
+    // if (leftIsCol && !rightIsCol) {
+    // int lidx = parseColumnRefToIndex(left, alias, rel);
+    // String val = parseConstant(right);
+    // return new Condition(lidx, op, val);
+    // }
+
+    // if (!leftIsCol && rightIsCol) {
+    // // exemple: 8<=t.NoteCT (TP7 A3 exemples)
+    // int ridx = parseColumnRefToIndex(right, alias, rel);
+    // String val = parseConstant(left);
+
+    // // On inverse l’opérateur car constante OP colonne
+    // Condition.Op inv = switch (op) {
+    // case LT -> Condition.Op.GT;
+    // case GT -> Condition.Op.LT;
+    // case LE -> Condition.Op.GE;
+    // case GE -> Condition.Op.LE;
+    // default -> op; // EQ, NE inchangés
+    // };
+
+    // return new Condition(ridx, inv, val);
+    // }
+
+    // throw new IllegalArgumentException("Condition invalide (aucun terme colonne):
+    // " + c);
+    // }
+
+    // private String parseConstant(String raw) {
+    // raw = raw.trim();
+
+    // // valeurs chaîne entre guillemets (TP7 A1/A2/A3)
+    // if ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("ʺ") &&
+    // raw.endsWith("ʺ"))) {
+    // return raw.substring(1, raw.length() - 1);
+    // }
+    // return raw; // nombre ou autre
+    // }
 
     private Condition parseCondition(String c, String alias, Relation rel) {
         // TP7 A3: Terme1OPTerme2, OP parmi =,<,>,<=,>=,<>
@@ -554,8 +628,10 @@ public class SGBD {
 
         Condition.Op op = Condition.parseOp(opFound);
 
-        boolean leftIsCol = left.contains(".");
-        boolean rightIsCol = right.contains(".");
+        // ✅ FIX: ne plus utiliser contains(".") car 54.07 est un float (pas une
+        // colonne)
+        boolean leftIsCol = isColumnRef(left);
+        boolean rightIsCol = isColumnRef(right);
 
         // TP7 A3: au max un terme est une constante
         if (leftIsCol && rightIsCol) {
@@ -593,11 +669,34 @@ public class SGBD {
     private String parseConstant(String raw) {
         raw = raw.trim();
 
-        // valeurs chaîne entre guillemets (TP7 A1/A2/A3)
         if ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("ʺ") && raw.endsWith("ʺ"))) {
             return raw.substring(1, raw.length() - 1);
         }
-        return raw; // nombre ou autre
+        return raw;
+    }
+
+    private int parseColumnRefToIndex(String colRef, String alias, Relation rel) {
+        int dot = colRef.indexOf('.');
+        if (dot == -1)
+            throw new IllegalArgumentException("Colonne invalide (attendu alias.col): " + colRef);
+
+        String a = colRef.substring(0, dot).trim();
+        String col = colRef.substring(dot + 1).trim();
+
+        if (!a.equals(alias))
+            throw new IllegalArgumentException("Alias invalide: " + a + " (attendu " + alias + ")");
+
+        for (int i = 0; i < rel.getColumns().size(); i++) {
+            if (rel.getColumns().get(i).getName().equalsIgnoreCase(col))
+                return i;
+        }
+        throw new IllegalArgumentException("Colonne inconnue: " + col);
+    }
+
+    private boolean isColumnRef(String token) {
+        token = token.trim();
+        // vrai format attendu : alias.col
+        return token.matches("[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*");
     }
 
     public void ProcessDeleteCommand(String textCommand) throws Exception {
@@ -701,9 +800,10 @@ public class SGBD {
                 type = typeDef.substring(0, open).trim().toUpperCase();
                 size = Integer.parseInt(typeDef.substring(open + 1, close).trim());
 
-                if (!type.equals("VARCHAR")) {
+                if (!type.equals("VARCHAR") && !type.equals("CHAR")) {
                     throw new IllegalArgumentException("Type inconnu : " + type);
                 }
+
             } else {
                 type = typeDef.toUpperCase();
                 if (type.equals("INT") || type.equals("FLOAT")) {
@@ -725,7 +825,7 @@ public class SGBD {
         // raw doit être du style "abc"
         raw = raw.trim();
         if (raw.length() < 2 || raw.charAt(0) != '"' || raw.charAt(raw.length() - 1) != '"') {
-            throw new IllegalArgumentException("Valeur VARCHAR mal formée (guillemets requis) : " + raw);
+            throw new IllegalArgumentException("Valeur STRING mal formée (guillemets requis) : " + raw);
         }
         return raw.substring(1, raw.length() - 1); // sans guillemets
     }
@@ -754,6 +854,20 @@ public class SGBD {
                 rec.addValue(rawValue);
                 break;
             }
+            case "CHAR": {
+                String s = normalizeStringLiteral(rawValue);
+
+                int max = col.getSize();
+                if (max > 0 && s.length() != max) {
+                    throw new IllegalArgumentException(
+                            "CHAR(" + max + ") doit avoir exactement " + max + " caractères : " + s + " (len="
+                                    + s.length() + ")");
+                }
+
+                rec.addValue(s);
+                break;
+            }
+
             case "VARCHAR": {
                 String s = normalizeStringLiteral(rawValue);
 
